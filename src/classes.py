@@ -12,12 +12,12 @@ class Product:
 
     @property
     def price(self):
-        """Геттер для цены"""
+        """геттер для цены"""
         return self.__price
 
     @price.setter
     def price(self, new_price):
-        """Сеттер для цены с проверкой"""
+        """сеттер для цены с проверкой"""
         if new_price > 0:
             self.__price = new_price
         else:
@@ -25,13 +25,23 @@ class Product:
 
     @classmethod
     def new_product(cls, product_data: dict):
-        """Создает объект Product из словаря"""
+        """создает объект Product из словаря"""
         return cls(
             name=product_data['name'],
             description=product_data['description'],
             price=product_data['price'],
             quantity=product_data['quantity']
         )
+
+    def __str__(self):
+        """представление объекта Product строкой"""
+        return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
+
+    def __add__(self, other):
+        """магический метод сложения для объектов Product"""
+        if isinstance(other, Product):
+            return self.price * self.quantity + other.price * other.quantity
+        raise TypeError("операнд справа должен быть объектом типа Product")
 
 
 class Category:
@@ -52,17 +62,22 @@ class Category:
                 self.add_product(product)
 
     def add_product(self, product: Product):
-        """Добавление продукта в категорию"""
+        """добавление продукта в категорию"""
         if isinstance(product, Product):
             self.__products.append(product)
             Category.product_count += 1
         else:
-            print("Можно добавлять только объекты типа Product")
+            print("можно добавлять только объекты типа Product")
 
     @property
     def products(self):
-        """Возвращает список продуктов в формате строки"""
+        """возвращает список продуктов строкой"""
         return "\n".join(
             f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт."
             for product in self.__products
         )
+
+    def __str__(self):
+        """представление объекта category строке"""
+        total_quantity = sum(product.quantity for product in self.__products)
+        return f"{self.name}, кол-во продуктов: {total_quantity} шт."
