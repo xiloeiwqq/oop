@@ -1,9 +1,20 @@
-class Product:
+from abc import ABC, abstractmethod
+
+
+class PrintMixin:
+    def __init__(self, *args, **kwargs):
+        cls_name = self.__class__.__name__
+        print(f"Создан объект класса {cls_name} с параметрами: {args}, {kwargs}")
+        super().__init__(*args, **kwargs)
+
+
+class BaseProduct(ABC):
     name: str
     description: str
-    __price: int
     quantity: int
+    __price: int
 
+    @abstractmethod
     def __init__(self, name, description, price, quantity):
         self.name = name
         self.description = description
@@ -12,20 +23,26 @@ class Product:
 
     @property
     def price(self):
-        """Геттер для цены"""
         return self.__price
 
     @price.setter
     def price(self, new_price):
-        """Сеттер для цены с проверкой"""
         if new_price > 0:
             self.__price = new_price
         else:
             print("Цена не должна быть нулевая или отрицательная")
 
+    @abstractmethod
+    def __str__(self):
+        pass
+
+
+class Product(PrintMixin, BaseProduct):
+    def __init__(self, name, description, price, quantity):
+        super().__init__(name=name, description=description, price=price, quantity=quantity)
+
     @classmethod
     def new_product(cls, product_data: dict):
-        """Создает объект Product из словаря"""
         return cls(
             name=product_data['name'],
             description=product_data['description'],
@@ -34,11 +51,9 @@ class Product:
         )
 
     def __str__(self):
-        """Строковое представление объекта Product"""
         return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
 
     def __add__(self, other):
-        """Магический метод сложения для объектов Product"""
         if isinstance(other, Product):
             if type(self) is type(other):
                 return self.price * self.quantity + other.price * other.quantity
@@ -48,11 +63,6 @@ class Product:
 
 
 class Smartphone(Product):
-    efficiency: str
-    model: str
-    memory: int
-    color: str
-
     def __init__(self, name, description, price, quantity, efficiency, model, memory, color):
         super().__init__(name, description, price, quantity)
         self.efficiency = efficiency
@@ -66,10 +76,6 @@ class Smartphone(Product):
 
 
 class LawnGrass(Product):
-    country: str
-    germination_period: int
-    color: str
-
     def __init__(self, name, description, price, quantity, country, germination_period, color):
         super().__init__(name, description, price, quantity)
         self.country = country
@@ -100,7 +106,6 @@ class Category:
                 self.add_product(product)
 
     def add_product(self, product: Product):
-        """Добавление продукта в категорию"""
         if isinstance(product, Product):
             self.__products.append(product)
             Category.product_count += 1
@@ -109,12 +114,8 @@ class Category:
 
     @property
     def products(self):
-        """Возвращает список продуктов в формате строки"""
-        return "\n".join(
-            f"{product}" for product in self.__products
-        )
+        return "\n".join(str(product) for product in self.__products)
 
     def __str__(self):
-        """Строковое представление объекта Category"""
         total_quantity = sum(product.quantity for product in self.__products)
         return f"{self.name}, количество продуктов: {total_quantity} шт."

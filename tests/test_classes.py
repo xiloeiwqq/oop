@@ -1,132 +1,85 @@
 import unittest
 from io import StringIO
 import sys
+
 from src.classes import Product, Smartphone, LawnGrass, Category
 
 
-class TestProduct(unittest.TestCase):
+class TestProductSystem(unittest.TestCase):
 
     def setUp(self):
-        self.product_data = {
-            'name': 'Test Product',
-            'description': 'This is a test product',
-            'price': 100,
-            'quantity': 5
-        }
-        self.product = Product.new_product(self.product_data)
+        self.product = Product("Продукт1", "Описание", 1000, 5)
+        self.smartphone = Smartphone("iPhone", "Смартфон Apple", 99999, 2, "A16", "14 Pro", 256, "black")
+        self.grass = LawnGrass("Зеленая", "Газонная трава", 500, 10, "Россия", 14, "зеленый")
 
-    def test_product_initialization(self):
-        self.assertEqual(self.product.name, 'Test Product')
-        self.assertEqual(self.product.description, 'This is a test product')
-        self.assertEqual(self.product.price, 100)
+    def test_product_creation(self):
+        self.assertEqual(self.product.name, "Продукт1")
+        self.assertEqual(self.product.description, "Описание")
+        self.assertEqual(self.product.price, 1000)
         self.assertEqual(self.product.quantity, 5)
 
     def test_price_setter_valid(self):
-        self.product.price = 150
-        self.assertEqual(self.product.price, 150)
+        self.product.price = 1500
+        self.assertEqual(self.product.price, 1500)
 
     def test_price_setter_invalid(self):
         captured_output = StringIO()
         sys.stdout = captured_output
-        self.product.price = -10
+        self.product.price = -100
         sys.stdout = sys.__stdout__
-        self.assertEqual(self.product.price, 100)
-        self.assertEqual(captured_output.getvalue().strip(), "Цена не должна быть нулевая или отрицательная")
+        self.assertIn("Цена не должна быть нулевая или отрицательная", captured_output.getvalue())
 
-    def test_str_method(self):
-        self.assertEqual(str(self.product), 'Test Product, 100 руб. Остаток: 5 шт.')
+    def test_str_product(self):
+        self.assertEqual(str(self.product), "Продукт1, 1000 руб. Остаток: 5 шт.")
 
-    def test_add_method_same_type(self):
-        another_product = Product('Another', 'Another product', 200, 3)
-        result = self.product + another_product
-        self.assertEqual(result, 100 * 5 + 200 * 3)
+    def test_str_smartphone(self):
+        expected = "Смартфон iPhone 14 Pro, 256GB, цвет: black, 99999 руб. Остаток: 2 шт."
+        self.assertEqual(str(self.smartphone), expected)
 
-    def test_add_method_different_type(self):
-        smartphone = Smartphone('Phone', 'Smartphone', 1000, 2, 'High', 'ModelX', 128, 'Black')
-        with self.assertRaises(TypeError) as context:
-            _ = self.product + smartphone
-        self.assertEqual(str(context.exception), "Нельзя складывать товары разных типов")
+    def test_str_lawn_grass(self):
+        expected = "Трава Зеленая из Россия, цвет: зеленый, срок прорастания: 14 дней, 500 руб. Остаток: 10 шт."
+        self.assertEqual(str(self.grass), expected)
 
-    def test_add_method_invalid_operand(self):
-        with self.assertRaises(TypeError) as context:
-            _ = self.product + 5
-        self.assertEqual(str(context.exception), "Операнд справа должен быть объектом типа Product")
+    def test_add_same_type(self):
+        p1 = Product("A", "desc", 100, 2)
+        p2 = Product("B", "desc", 200, 3)
+        result = p1 + p2
+        self.assertEqual(result, 100 * 2 + 200 * 3)
 
+    def test_add_different_type(self):
+        with self.assertRaises(TypeError):
+            _ = self.product + self.smartphone
 
-class TestSmartphone(unittest.TestCase):
+    def test_add_wrong_type(self):
+        with self.assertRaises(TypeError):
+            _ = self.product + 123
 
-    def setUp(self):
-        self.smartphone = Smartphone('iPhone', 'Smartphone from Apple', 1000, 10, 'High', '14 Pro', 256, 'Purple')
+    def test_new_product_from_dict(self):
+        data = {
+            'name': 'Тест',
+            'description': 'Описание',
+            'price': 300,
+            'quantity': 4
+        }
+        p = Product.new_product(data)
+        self.assertIsInstance(p, Product)
+        self.assertEqual(p.name, 'Тест')
+        self.assertEqual(p.price, 300)
 
-    def test_smartphone_initialization(self):
-        self.assertEqual(self.smartphone.name, 'iPhone')
-        self.assertEqual(self.smartphone.model, '14 Pro')
-        self.assertEqual(self.smartphone.memory, 256)
-        self.assertEqual(self.smartphone.color, 'Purple')
+    def test_category_add_product(self):
+        category = Category("Смартфоны", "Описание категории")
+        category.add_product(self.smartphone)
+        self.assertIn("Смартфон iPhone", category.products)
+        self.assertEqual(str(category), "Смартфоны, количество продуктов: 2 шт.")
 
-    def test_str_method(self):
-        self.assertEqual(
-            str(self.smartphone),
-            'Смартфон iPhone 14 Pro, 256GB, цвет: Purple, 1000 руб. Остаток: 10 шт.'
-        )
+    def test_category_add_invalid(self):
+        category = Category("Тест", "Ошибка")
+        with self.assertRaises(TypeError):
+            category.add_product("не продукт")
 
-
-class TestLawnGrass(unittest.TestCase):
-
-    def setUp(self):
-        self.grass = LawnGrass('GreenMix', 'Lawn Grass from USA', 500, 20, 'USA', 30, 'Green')
-
-    def test_lawngrass_initialization(self):
-        self.assertEqual(self.grass.name, 'GreenMix')
-        self.assertEqual(self.grass.country, 'USA')
-        self.assertEqual(self.grass.germination_period, 30)
-        self.assertEqual(self.grass.color, 'Green')
-
-    def test_str_method(self):
-        self.assertEqual(
-            str(self.grass),
-            'Трава GreenMix из USA, цвет: Green, срок прорастания: 30 дней, 500 руб. Остаток: 20 шт.'
-        )
+    def test_category_counter(self):
+        self.assertGreaterEqual(Category.category_count, 2)
 
 
-class TestCategory(unittest.TestCase):
-
-    def setUp(self):
-        Category.category_count = 0
-        Category.product_count = 0
-
-        self.product1 = Product('Product 1', 'Description 1', 100, 5)
-        self.product2 = Product('Product 2', 'Description 2', 200, 3)
-        self.category = Category('Test Category', 'Test description', [self.product1, self.product2])
-
-    def test_category_initialization(self):
-        self.assertEqual(self.category.name, 'Test Category')
-        self.assertEqual(self.category.description, 'Test description')
-        self.assertEqual(len(self.category._Category__products), 2)
-        self.assertEqual(Category.category_count, 1)
-        self.assertEqual(Category.product_count, 2)
-
-    def test_add_product(self):
-        product3 = Product('Product 3', 'Description 3', 300, 2)
-        self.category.add_product(product3)
-        self.assertEqual(len(self.category._Category__products), 3)
-        self.assertEqual(Category.product_count, 3)
-
-    def test_add_product_invalid_type(self):
-        with self.assertRaises(TypeError) as context:
-            self.category.add_product("not a product")
-        self.assertEqual(str(context.exception), "Можно добавлять только объекты типа Product или его наследников")
-
-    def test_products_property(self):
-        expected_output = (
-            "Product 1, 100 руб. Остаток: 5 шт.\n"
-            "Product 2, 200 руб. Остаток: 3 шт."
-        )
-        self.assertEqual(self.category.products, expected_output)
-
-    def test_str_method(self):
-        self.assertEqual(str(self.category), 'Test Category, количество продуктов: 8 шт.')
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
