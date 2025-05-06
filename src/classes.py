@@ -12,12 +12,12 @@ class Product:
 
     @property
     def price(self):
-        """геттер для цены"""
+        """Геттер для цены"""
         return self.__price
 
     @price.setter
     def price(self, new_price):
-        """сеттер для цены с проверкой"""
+        """Сеттер для цены с проверкой"""
         if new_price > 0:
             self.__price = new_price
         else:
@@ -25,7 +25,7 @@ class Product:
 
     @classmethod
     def new_product(cls, product_data: dict):
-        """создает объект Product из словаря"""
+        """Создает объект Product из словаря"""
         return cls(
             name=product_data['name'],
             description=product_data['description'],
@@ -34,14 +34,52 @@ class Product:
         )
 
     def __str__(self):
-        """представление объекта Product строкой"""
+        """Строковое представление объекта Product"""
         return f"{self.name}, {self.price} руб. Остаток: {self.quantity} шт."
 
     def __add__(self, other):
-        """магический метод сложения для объектов Product"""
+        """Магический метод сложения для объектов Product"""
         if isinstance(other, Product):
-            return self.price * self.quantity + other.price * other.quantity
-        raise TypeError("операнд справа должен быть объектом типа Product")
+            if type(self) is type(other):
+                return self.price * self.quantity + other.price * other.quantity
+            else:
+                raise TypeError("Нельзя складывать товары разных типов")
+        raise TypeError("Операнд справа должен быть объектом типа Product")
+
+
+class Smartphone(Product):
+    efficiency: str
+    model: str
+    memory: int
+    color: str
+
+    def __init__(self, name, description, price, quantity, efficiency, model, memory, color):
+        super().__init__(name, description, price, quantity)
+        self.efficiency = efficiency
+        self.model = model
+        self.memory = memory
+        self.color = color
+
+    def __str__(self):
+        return (f"Смартфон {self.name} {self.model}, {self.memory}GB, цвет: {self.color}, "
+                f"{self.price} руб. Остаток: {self.quantity} шт.")
+
+
+class LawnGrass(Product):
+    country: str
+    germination_period: int
+    color: str
+
+    def __init__(self, name, description, price, quantity, country, germination_period, color):
+        super().__init__(name, description, price, quantity)
+        self.country = country
+        self.germination_period = germination_period
+        self.color = color
+
+    def __str__(self):
+        return (f"Трава {self.name} из {self.country}, цвет: {self.color}, "
+                f"срок прорастания: {self.germination_period} дней, "
+                f"{self.price} руб. Остаток: {self.quantity} шт.")
 
 
 class Category:
@@ -62,22 +100,21 @@ class Category:
                 self.add_product(product)
 
     def add_product(self, product: Product):
-        """добавление продукта в категорию"""
+        """Добавление продукта в категорию"""
         if isinstance(product, Product):
             self.__products.append(product)
             Category.product_count += 1
         else:
-            print("можно добавлять только объекты типа Product")
+            raise TypeError("Можно добавлять только объекты типа Product или его наследников")
 
     @property
     def products(self):
-        """возвращает список продуктов строкой"""
+        """Возвращает список продуктов в формате строки"""
         return "\n".join(
-            f"{product.name}, {product.price} руб. Остаток: {product.quantity} шт."
-            for product in self.__products
+            f"{product}" for product in self.__products
         )
 
     def __str__(self):
-        """представление объекта category строке"""
+        """Строковое представление объекта Category"""
         total_quantity = sum(product.quantity for product in self.__products)
-        return f"{self.name}, кол-во продуктов: {total_quantity} шт."
+        return f"{self.name}, количество продуктов: {total_quantity} шт."
