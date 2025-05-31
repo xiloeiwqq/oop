@@ -16,6 +16,8 @@ class BaseProduct(ABC):
 
     @abstractmethod
     def __init__(self, name, description, price, quantity):
+        if quantity == 0:
+            raise ValueError("Товар с нулевым количеством не может быть добавлен")
         self.name = name
         self.description = description
         self.__price = price
@@ -115,6 +117,13 @@ class Category:
     @property
     def products(self):
         return "\n".join(str(product) for product in self.__products)
+
+    def middle_price(self):
+        try:
+            total_price = sum(product.price for product in self.__products)
+            return total_price / len(self.__products)
+        except ZeroDivisionError:
+            return 0
 
     def __str__(self):
         total_quantity = sum(product.quantity for product in self.__products)
